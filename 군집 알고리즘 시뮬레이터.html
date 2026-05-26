@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>군집 알고리즘 학습 연구소</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:'Pretendard','Noto Sans KR',sans-serif;
+  background:#f1f5f9;
+  color:#0f172a;
+}
+
+header{
+  background:linear-gradient(135deg,#2563eb,#14b8a6);
+  color:white;
+  padding:30px;
+}
+
+header h1{
+  margin:0;
+  font-size:2.2rem;
+}
+
+header p{
+  margin-top:12px;
+  line-height:1.7;
+  max-width:1000px;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:320px 1fr 320px;
+  gap:20px;
+  padding:20px;
+}
+
+.panel{
+  background:white;
+  border-radius:24px;
+  padding:22px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+h2{
+  margin-top:0;
+}
+
+.control-group{
+  margin-bottom:20px;
+}
+
+label{
+  display:block;
+  margin-bottom:8px;
+  font-weight:700;
+}
+
+select,
+input[type="range"]{
+  width:100%;
+}
+
+.speed-box {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+button{
+  width:100%;
+  border:none;
+  border-radius:14px;
+  padding:13px;
+  font-weight:700;
+  cursor:pointer;
+  margin-bottom:10px;
+  transition:0.2s;
+  font-size:0.97rem;
+}
+
+button:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+
+button:disabled {
+  background: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.primary{
+  background:#2563eb;
+  color:white;
+}
+
+.orange{
+  background:#ea580c;
+  color:white;
+}
+
+.red{
+  background:#dc2626;
+  color:white;
+}
+
+.gray{
+  background:#475569;
+  color:white;
+}
+
+canvas{
+  width:100%;
+  height:auto;
+  background:white;
+  border-radius:24px;
+  border:3px dashed #cbd5e1;
+  cursor:crosshair;
+  touch-action:none;
+}
+
+.status{
+  margin-top:18px;
+  background:#f8fafc;
+  border:1px solid #cbd5e1;
+  border-radius:16px;
+  padding:16px;
+  line-height:1.7;
+  min-height:120px;
+}
+
+.card{
+  margin-top:18px;
+  border-radius:18px;
+  padding:18px;
+  line-height:1.7;
+}
+
+.blue{
+  background:#dbeafe;
+  border-left:6px solid #2563eb;
+}
+
+.green{
+  background:#dcfce7;
+  border-left:6px solid #16a34a;
+}
+
+.orange-card{
+  background:#fff7ed;
+  border-left:6px solid #f97316;
+  font-size:0.92rem;
+}
+
+.orange-card ul {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#f8fafc;
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:0.92rem;
+}
+
+.dot{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+}
+
+.metric{
+  background:#f8fafc;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+}
+
+.metric-title{
+  font-size:0.9rem;
+  color:#64748b;
+}
+
+.metric-value{
+  font-size:1.8rem;
+  font-weight:800;
+  margin-top:4px;
+}
+
+.quiz{
+  margin-top:16px;
+  padding:14px;
+  border-radius:14px;
+  background:#f8fafc;
+  line-height:1.7;
+}
+
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#e2e8f0;
+  font-size:0.85rem;
+  margin-top:8px;
+}
+
+ul{
+  padding-left:20px;
+}
+
+@media(max-width:1200px){
+  .layout{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🧠 군집 알고리즘 학습 연구소</h1>
+  <p>
+    직접 데이터를 배치하고 k-Means와 DBSCAN 알고리즘이 어떻게 군집을 형성하는지 실시간으로 관찰해 보세요.<br>
+    서천 고등학교 학생들이 머신러닝의 핵심 개념을 직관적으로 이해할 수 있도록 제작된 교육용 시뮬레이터입니다.
+  </p>
+</header>
+
+<div class="layout">
+
+  <div class="panel">
+
+    <h2>🎛 실습 설정</h2>
+
+    <div class="control-group">
+      <label>알고리즘 선택</label>
+      <select id="algorithm">
+        <option value="kmeans">k-Means</option>
+        <option value="dbscan">DBSCAN</option>
+      </select>
+    </div>
+
+    <div id="k-group" class="control-group">
+      <label>k 값: <span id="kValue">3</span></label>
+      <input type="range" id="kSlider" min="2" max="6" value="3">
+    </div>
+
+    <div id="eps-group" class="control-group" style="display:none;">
+      <label>ε 거리 반경: <span id="epsValue">60</span></label>
+      <input type="range" id="epsSlider" min="20" max="150" value="60">
+    </div>
+
+    <div id="minpts-group" class="control-group" style="display:none;">
+      <label>MinPts: <span id="minPtsValue">4</span></label>
+      <input type="range" id="minPtsSlider" min="2" max="10" value="4">
+    </div>
+
+    <div class="card orange-card" id="parameterInfo">
+      <strong>🧪 파라미터 가이드</strong>
+      <div id="kmeansInfo">
+        <ul>
+          <li><strong>k 값</strong>: 데이터를 몇 개의 군집으로 묶을지 지정합니다. 너무 작으면 서로 다른 그룹이 합쳐지고, 크면 잘게 쪼개집니다.</li>
+        </ul>
+      </div>
+      <div id="dbscanInfo" style="display:none;">
+        <ul>
+          <li><strong>ε (엡실론)</strong>: 이웃 점을 탐색할 원형 반경(거리)입니다.</li>
+          <li><strong>MinPts</strong>: 한 군집을 이루기 위해 반경 내에 존재해야 하는 최소 점의 개수입니다.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="speed-box">
+      <label>⏱ 자동 재생 속도: <span id="speedValue">0.5</span>초 간격</label>
+      <input type="range" id="speedSlider" min="1" max="15" value="5">
+    </div>
+
+    <button class="orange" id="autoBtn">⏯ 자동 재생 시작</button>
+    <button class="primary" id="runBtn">▶ 한 번에 결과 보기</button>
+    <button class="gray" id="randomBtn">🎲 랜덤 데이터 생성</button>
+    <button class="gray" id="undoBtn">↩ 마지막 점 삭제</button>
+    <button class="red" id="clearBtn">🧹 전체 초기화</button>
+
+    <div class="status" id="statusBox">
+      캔버스를 클릭하여 데이터를 추가해 보세요.
+    </div>
+
+  </div>
+
+  <div class="panel">
+
+    <canvas id="canvas" width="1000" height="650"></canvas>
+
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:#3b82f6"></div>군집 1</div>
+      <div class="legend-item"><div class="dot" style="background:#22c55e"></div>군집 2</div>
+      <div class="legend-item"><div class="dot" style="background:#f59e0b"></div>군집 3</div>
+      <div class="legend-item"><div class="dot" style="background:#ef4444"></div>군집 4</div>
+      <div class="legend-item"><div class="dot" style="background:#8b5cf6"></div>군집 5</div>
+      <div class="legend-item"><div class="dot" style="background:#06b6d4"></div>군집 6</div>
+      <div class="legend-item"><div class="dot" style="background:#6b7280"></div>노이즈 / 미분류</div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+
+    <h2>📊 실시간 통계</h2>
+
+    <div class="metric">
+      <div class="metric-title">데이터 개수</div>
+      <div class="metric-value" id="pointCount">0</div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-title">현재 단계(연산 횟수)</div>
+      <div class="metric-value" id="stepCount">0</div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-title">평균 군집 오차(SSE 변형)</div>
+      <div class="metric-value" id="sseValue">0</div>
+    </div>
+
+    <div class="card blue">
+      <h3>🔵 k-Means</h3>
+      <ul>
+        <li>가장 가까운 중심점에 데이터 배정</li>
+        <li>중심점을 평균 위치로 이동</li>
+        <li>오차를 줄이며 반복</li>
+      </ul>
+      <div class="badge">둥근 데이터에 강함</div>
+    </div>
+
+    <div class="card green">
+      <h3>🟢 DBSCAN</h3>
+      <ul>
+        <li>밀도가 높은 영역 탐색</li>
+        <li>노이즈 자동 탐지</li>
+        <li>복잡한 모양의 군집 가능</li>
+      </ul>
+      <div class="badge">이상치 탐지 가능</div>
+    </div>
+
+    <div class="quiz">
+      <strong>🧩 생각해 보기</strong><br><br>
+
+      왜 k-Means는 구불구불한 데이터에서 잘 동작하지 않을까요?
+      <br><br>
+
+      왜 DBSCAN은 노이즈 탐지에 강할까요?
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const algorithmSelect = document.getElementById('algorithm');
+
+const kSlider = document.getElementById('kSlider');
+const epsSlider = document.getElementById('epsSlider');
+const minPtsSlider = document.getElementById('minPtsSlider');
+const speedSlider = document.getElementById('speedSlider');
+
+const kValue = document.getElementById('kValue');
+const epsValue = document.getElementById('epsValue');
+const minPtsValue = document.getElementById('minPtsValue');
+const speedValue = document.getElementById('speedValue');
+
+const pointCount = document.getElementById('pointCount');
+const stepCount = document.getElementById('stepCount');
+const sseValue = document.getElementById('sseValue');
+
+const statusBox = document.getElementById('statusBox');
+
+const runBtn = document.getElementById('runBtn');
+const autoBtn = document.getElementById('autoBtn');
+
+const colors = [
+  '#3b82f6',
+  '#22c55e',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#06b6d4'
+];
+
+let points = [];
+let centroids = [];
+let currentStep = 0;
+let autoPlay = false;
+let autoInterval = null;
+let isFinished = false;
+
+let dbscanState = {
+  initialized: false,
+  pointIndex: 0,
+  clusterId: 0,
+  queue: [],
+  currentPoint: null
+};
+
+function updateMetrics(){
+  pointCount.textContent = points.length;
+  stepCount.textContent = currentStep;
+
+  if(algorithmSelect.value === 'kmeans' && centroids.length > 0 && points.length > 0){
+    // 직관적인 인지를 위해 RMSE 형태로 정규화하여 픽셀 거리 단위로 매핑
+    const normalizedError = Math.sqrt(calculateSSE() / points.length);
+    sseValue.textContent = normalizedError.toFixed(1);
+  }else{
+    sseValue.textContent = '-';
+  }
+}
+
+function calculateSSE(){
+  let sse = 0;
+  points.forEach(p=>{
+    if(p.cluster !== -1 && centroids[p.cluster]){
+      const d = distance(p, centroids[p.cluster]);
+      sse += d*d;
+    }
+  });
+  return sse;
+}
+
+function resetState(){
+  if(autoPlay) stopAutoPlay();
+  currentStep = 0;
+  centroids = [];
+  isFinished = false;
+  
+  dbscanState.initialized = false;
+  dbscanState.currentPoint = null;
+
+  points.forEach(p=>{
+    p.cluster = -1;
+    p.noise = false;
+    p.visited = false;
+  });
+
+  autoBtn.disabled = false;
+  runBtn.disabled = false;
+  autoBtn.textContent = '⏯ 자동 재생 시작';
+  autoBtn.style.background = '#ea580c';
+
+  updateMetrics();
+}
+
+function setFinished(message) {
+  isFinished = true;
+  autoBtn.disabled = true;
+  runBtn.disabled = true;
+  if (autoPlay) stopAutoPlay();
+  statusBox.innerHTML = message;
+  autoBtn.textContent = '✅ 재생 완료';
+  autoBtn.style.background = '#cbd5e1';
+}
+
+canvas.addEventListener('click',(e)=>{
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+
+  points.push({ x, y, cluster:-1, noise:false, visited:false });
+
+  resetState();
+  draw();
+
+  statusBox.innerHTML = `데이터 추가 완료<br>현재 데이터 수: <strong>${points.length}</strong>개`;
+});
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(algorithmSelect.value === 'dbscan' && dbscanState.currentPoint) {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(20, 184, 166, 0.3)';
+    ctx.fillStyle = 'rgba(20, 184, 166, 0.05)';
+    ctx.lineWidth = 2;
+    ctx.arc(dbscanState.currentPoint.x, dbscanState.currentPoint.y, parseInt(epsSlider.value), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  if(algorithmSelect.value === 'kmeans'){
+    points.forEach(p=>{
+      if(p.cluster !== -1 && centroids[p.cluster]){
+        ctx.beginPath();
+        ctx.strokeStyle = colors[p.cluster] + '44';
+        ctx.lineWidth = 1;
+        ctx.moveTo(p.x,p.y);
+        ctx.lineTo(centroids[p.cluster].x, centroids[p.cluster].y);
+        ctx.stroke();
+      }
+    });
+  }
+
+  points.forEach(p=>{
+    ctx.beginPath();
+    if(p.noise) ctx.fillStyle = '#6b7280';
+    else if(p.cluster !== -1) ctx.fillStyle = colors[p.cluster];
+    else ctx.fillStyle = '#cbd5e1';
+
+    if(dbscanState.currentPoint && p === dbscanState.currentPoint) {
+      ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    } else {
+      ctx.arc(p.x,p.y,8,0,Math.PI*2);
+    }
+    ctx.fill();
+  });
+
+  centroids.forEach((c,index)=>{
+    ctx.strokeStyle = colors[index];
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(c.x-12,c.y-12); ctx.lineTo(c.x+12,c.y+12);
+    ctx.moveTo(c.x+12,c.y-12); ctx.lineTo(c.x-12,c.y+12);
+    ctx.stroke();
+  });
+
+  updateMetrics();
+}
+
+function distance(a,b){ return Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2); }
+
+function initializeCentroids(k){
+  centroids = [];
+  const shuffled = [...points].sort(()=>Math.random()-0.5);
+  for(let i=0; i<Math.min(k, shuffled.length); i++){
+    centroids.push({ x:shuffled[i].x, y:shuffled[i].y });
+  }
+}
+
+function stepKMeans(){
+  const k = parseInt(kSlider.value);
+
+  if(centroids.length === 0){
+    initializeCentroids(k);
+    currentStep = 1;
+    statusBox.innerHTML = `<strong>1단계: 초기 중심점 배치</strong><br>${k}개의 중심점(X 표시)을 임의 배치했습니다.`;
+    draw();
+    return;
+  }
+
+  let changed = false;
+  points.forEach(p=>{
+    let minDist = Infinity, bestCluster = 0;
+    centroids.forEach((c,index)=>{
+      const d = distance(p,c);
+      if(d < minDist){ minDist = d; bestCluster = index; }
+    });
+    if(p.cluster !== bestCluster) changed = true;
+    p.cluster = bestCluster;
+  });
+
+  for(let i=0;i<k;i++){
+    const clusterPoints = points.filter(p=>p.cluster === i);
+    if(clusterPoints.length){
+      const avgX = clusterPoints.reduce((s,p)=>s+p.x,0) / clusterPoints.length;
+      const avgY = clusterPoints.reduce((s,p)=>s+p.y,0) / clusterPoints.length;
+      centroids[i] = { x:avgX, y:avgY };
+    }
+  }
+
+  currentStep++;
+  draw();
+
+  if(changed){
+    statusBox.innerHTML = `<strong>${currentStep}단계 재생 중</strong><br>데이터를 가까운 중심에 배정하고, 중심점의 위치를 평균 좌표로 이동 중입니다.`;
+  }else{
+    setFinished(`🎉 <strong>k-Means 재생 완료!</strong><br>중심점이 수렴하여 알고리즘이 성공적으로 정지했습니다. (총 ${currentStep - 1}회 반복)`);
+  }
+}
+
+function stepDBSCAN() {
+  const eps = parseInt(epsSlider.value);
+  const minPts = parseInt(minPtsSlider.value);
+
+  if (!dbscanState.initialized) {
+    points.forEach(p => { p.visited = false; p.cluster = -1; p.noise = false; });
+    dbscanState.pointIndex = 0; dbscanState.clusterId = 0; dbscanState.queue = [];
+    dbscanState.initialized = true; currentStep = 0;
+  }
+
+  if (dbscanState.queue.length === 0) {
+    while (dbscanState.pointIndex < points.length) {
+      let point = points[dbscanState.pointIndex];
+      if (!point.visited) {
+        point.visited = true;
+        dbscanState.currentPoint = point;
+        const neighbors = regionQuery(point, eps);
+
+        if (neighbors.length < minPts) {
+          point.noise = true; currentStep++; draw();
+          statusBox.innerHTML = `<strong>DBSCAN 이웃 탐색</strong><br>반경 내 이웃이 부족하여 외딴 점(잠정 노이즈)으로 판정합니다.`;
+          dbscanState.pointIndex++;
+          return;
+        } else {
+          point.cluster = dbscanState.clusterId;
+          dbscanState.queue = [...neighbors.filter(n => n !== point)];
+          currentStep++; draw();
+          statusBox.innerHTML = `<strong>신규 군집 ${dbscanState.clusterId + 1} 생성</strong><br>밀도 조건 충족! 발견한 이웃 점들을 큐에 넣고 확장을 시작합니다.`;
+          return;
+        }
+      }
+      dbscanState.pointIndex++;
+    }
+    dbscanState.currentPoint = null; draw();
+    setFinished(`🎉 <strong>DBSCAN 재생 완료!</strong><br>공간 밀도 조사가 끝났습니다. 발견된 총 군집 수: <strong>${dbscanState.clusterId}</strong>개`);
+    return;
+  }
+
+  if (dbscanState.queue.length > 0) {
+    let neighbor = dbscanState.queue.shift();
+    dbscanState.currentPoint = neighbor;
+
+    if (!neighbor.visited) {
+      neighbor.visited = true;
+      const neighborNeighbors = regionQuery(neighbor, eps);
+      if (neighborNeighbors.length >= minPts) {
+        dbscanState.queue.push(...neighborNeighbors.filter(n => !n.visited && !dbscanState.queue.includes(n)));
+        statusBox.innerHTML = `<strong>밀도 영역 확장 중</strong><br>군집 ${dbscanState.clusterId + 1}에 인접한 핵심 연결 데이터 경로를 발견해 추적 큐를 확장합니다.`;
+      }
+    }
+    if (neighbor.cluster === -1) { neighbor.cluster = dbscanState.clusterId; neighbor.noise = false; }
+    currentStep++; draw();
+
+    if (dbscanState.queue.length === 0) { dbscanState.clusterId++; dbscanState.pointIndex++; }
+  }
+}
+
+function regionQuery(point,eps){ return points.filter(p=> distance(point,p) <= eps ); }
+
+function runKMeans(){
+  const k = parseInt(kSlider.value);
+  if(centroids.length === 0) initializeCentroids(k);
+  let changed = true, loops = 0;
+  while(changed && loops < 30) {
+    changed = false;
+    points.forEach(p=>{
+      let minDist = Infinity, bc = 0;
+      centroids.forEach((c,idx)=>{ const d = distance(p,c); if(d < minDist) { minDist = d; bc = idx; } });
+      if(p.cluster !== bc) { changed = true; } p.cluster = bc;
+    });
+    for(let i=0;i<k;i++){
+      const cp = points.filter(p=>p.cluster === i);
+      if(cp.length){
+        centroids[i] = { x: cp.reduce((s,p)=>s+p.x,0) / cp.length, y: cp.reduce((s,p)=>s+p.y,0) / cp.length };
+      }
+    }
+    loops++;
+  }
+  currentStep = loops; draw();
+  setFinished(`<strong>k-Means 전체 연산 완료</strong><br>알고리즘 수렴 지점까지 한 번에 연산되었습니다.`);
+}
+
+function runDBSCAN(){
+  const eps = parseInt(epsSlider.value), minPts = parseInt(minPtsSlider.value);
+  let cId = 0;
+  points.forEach(p=>{ p.visited = false; p.cluster = -1; p.noise = false; });
+  points.forEach(point => {
+    if (point.visited) return; point.visited = true;
+    const neighbors = regionQuery(point,eps);
+    if(neighbors.length < minPts){ point.noise = true; return; }
+    point.cluster = cId; const queue = [...neighbors]; const visitedSet = new Set();
+    while(queue.length){
+      const n = queue.shift(); if(visitedSet.has(n)) continue; visitedSet.add(n);
+      if(!n.visited){ n.visited = true; const nn = regionQuery(n,eps); if(nn.length >= minPts) queue.push(...nn); }
+      if(n.cluster === -1){ n.cluster = cId; n.noise = false; }
+    }
+    cId++;
+  });
+  currentStep = points.length; dbscanState.currentPoint = null; centroids = []; draw();
+  setFinished(`<strong>DBSCAN 전체 연산 완료</strong><br>발견된 군집 수: <strong>${cId}</strong>개 (회색 점은 노이즈)`);
+}
+
+function startAutoPlay() {
+  autoPlay = true;
+  autoBtn.textContent = '⏸ 자동 재생 중지';
+  autoBtn.style.background = '#dc2626';
+
+  const triggerTicker = () => {
+    if (!autoPlay || isFinished) return;
+    
+    if(algorithmSelect.value === 'kmeans') stepKMeans();
+    else stepDBSCAN();
+
+    const speedInterval = speedSlider.value * 100;
+    autoInterval = setTimeout(triggerTicker, speedInterval);
+  };
+
+  const speedInterval = speedSlider.value * 100;
+  autoInterval = setTimeout(triggerTicker, speedInterval);
+}
+
+function stopAutoPlay(){
+  autoPlay = false;
+  if(autoInterval) clearTimeout(autoInterval);
+  if(!isFinished) {
+    autoBtn.textContent = '🔄 자동 재생 재개';
+    autoBtn.style.background = '#ea580c';
+  }
+}
+
+document.getElementById('runBtn').addEventListener('click',()=>{
+  if(points.length < 2){ statusBox.innerHTML = `최소 2개 이상의 데이터를 추가하세요.`; return; }
+  stopAutoPlay();
+  if(algorithmSelect.value === 'kmeans') runKMeans(); else runDBSCAN();
+});
+
+autoBtn.addEventListener('click',()=>{
+  if(points.length < 2){ statusBox.innerHTML = `최소 2개 이상의 데이터를 추가하세요.`; return; }
+  if(autoPlay) stopAutoPlay(); else startAutoPlay();
+});
+
+document.getElementById('randomBtn').addEventListener('click',() => {
+  points = []; resetState();
+  const centers = [{x:220,y:180}, {x:520,y:250}, {x:760,y:420}];
+  centers.forEach(c=>{
+    for(let i=0; i<40; i++){
+      points.push({ x:c.x + (Math.random()-0.5)*130, y:c.y + (Math.random()-0.5)*130, cluster:-1, noise:false, visited:false });
+    }
+  });
+  for(let i=0;i<10;i++) points.push({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, cluster:-1, noise:false, visited:false });
+  draw(); statusBox.innerHTML = `랜덤 데이터 생성 완료<br>자동 재생을 시작해 보세요.`;
+});
+
+document.getElementById('undoBtn').addEventListener('click',()=>{
+  if(points.length){ points.pop(); resetState(); draw(); statusBox.innerHTML = `마지막 점 삭제 완료`; }
+});
+
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  points = []; resetState(); draw(); statusBox.innerHTML = `모든 데이터를 초기화했습니다.`;
+});
+
+algorithmSelect.addEventListener('change',()=>{
+  const algo = algorithmSelect.value;
+  document.getElementById('k-group').style.display = algo === 'kmeans' ? 'block' : 'none';
+  document.getElementById('eps-group').style.display = algo === 'dbscan' ? 'block' : 'none';
+  document.getElementById('minpts-group').style.display = algo === 'dbscan' ? 'block' : 'none';
+  
+  document.getElementById('kmeansInfo').style.display = algo === 'kmeans' ? 'block' : 'none';
+  document.getElementById('dbscanInfo').style.display = algo === 'dbscan' ? 'block' : 'none';
+  
+  resetState(); draw();
+});
+
+kSlider.addEventListener('input',()=>{ kValue.textContent = kSlider.value; resetState(); });
+epsSlider.addEventListener('input',()=>{ epsValue.textContent = epsSlider.value; resetState(); });
+minPtsSlider.addEventListener('input',()=>{ minPtsValue.textContent = minPtsSlider.value; resetState(); });
+speedSlider.addEventListener('input',()=>{ speedValue.textContent = (speedSlider.value / 10).toFixed(1); });
+
+draw();
+
+</script>
+
+</body>
+</html>
